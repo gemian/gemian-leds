@@ -14,8 +14,8 @@ public:
 
     void handleCapsLock(bool state);
 
-    bool capsLock;
-    int powerState;
+    bool capsLock = 0;
+    int powerState = 0;
 
     void Update();
 
