@@ -25,7 +25,7 @@ void LightState::Update() {
     log->log(log_tag,"Update");
 
     std::ofstream aw9120_operation;
-    aw9120_operation.open("/proc/aw9210_operation");
+    aw9120_operation.open("/proc/aw9120_operation");
     aw9120_operation << "7 " << capsLock << " " << powerState << " 0";
     aw9120_operation.close();
 }
