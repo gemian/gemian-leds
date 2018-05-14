@@ -10,7 +10,9 @@ Build-Depends:
  debhelper (>= 10),
  intltool,
  cmake,
-
+ pkg-config,
+ dbus,
+ libglib2.0-dev,
 
 Package: gemian-leds
 Architecture: any

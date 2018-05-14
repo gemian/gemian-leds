@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 
 include(GNUInstallDirs)
-#find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GIO REQUIRED gio-2.0)
