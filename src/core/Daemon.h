@@ -28,6 +28,7 @@ private:
 
     std::shared_ptr<Log> const the_log;
     std::shared_ptr<LEDs> const leds;
+    std::shared_ptr<LightState> const lightState;
 
     bool running;
 
@@ -35,5 +36,4 @@ private:
     std::condition_variable action_queue_cv;
     std::deque<Action> action_queue;
 
-    LightState lightState;
 };

@@ -36,5 +36,9 @@ std::shared_ptr<LEDs> DaemonConfig::the_leds() {
     return leds;
 }
 
-
-
+std::shared_ptr<LightState> DaemonConfig::the_lightState() {
+    if (!lightState) {
+        lightState = std::make_shared<LightState>(the_log());
+    }
+    return lightState;
+}

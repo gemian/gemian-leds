@@ -24,6 +24,7 @@ char const* const log_tag = "Daemon";
 Daemon::Daemon(DaemonConfig& config)
         : the_log{config.the_log()},
           leds{config.the_leds()},
+          lightState{config.the_lightState()},
           running{false}
 {
 }
@@ -63,7 +64,7 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                     {
                         enqueue_action(
                                 [this, state] {
-                                    lightState.handleCapsLock(state);
+                                    lightState->handleCapsLock(state);
                                 });
                     }));
 
