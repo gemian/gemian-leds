@@ -2,17 +2,18 @@ Source: gemian-leds
 Priority: optional
 Section: admin
 Maintainer: Adam Boardman <adamboardman@gmail.com>
-Standards-Version: 3.9.8
-Homepage: https://github.com/gemian/gemian-leds
-Vcs-Git: https://github.com/gemian/gemian-leds.git
-Vcs-Browser: https://github.com/gemian/gemian-leds
 Build-Depends:
  debhelper (>= 10),
  intltool,
  cmake,
- pkg-config,
  dbus,
+ google-mock,
  libglib2.0-dev,
+ pkg-config
+Standards-Version: 3.9.8
+Homepage: https://github.com/gemian/gemian-leds
+Vcs-Git: https://github.com/gemian/gemian-leds.git
+Vcs-Browser: https://github.com/gemian/gemian-leds
 
 Package: gemian-leds
 Architecture: any
