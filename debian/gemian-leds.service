@@ -1,0 +1,13 @@
+[Unit]
+Description=Control Gemini PDA LEDs
+Wants=lxc-android-config.service
+After=lxc-android-config.service
+Before=repowerd.service
+
+[Service]
+Type=dbus
+BusName=org.thinkglobally.Gemian.LEDs
+ExecStart=/usr/sbin/gemian-leds
+
+[Install]
+WantedBy=multi-user.target

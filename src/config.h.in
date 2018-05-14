@@ -1,0 +1,7 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define LOCALEDIR               "@CMAKE_INSTALL_FULL_LOCALEDIR@"
+#define PROJECTNAME                 "@PROJECT_NAME_LOWER@"
+
+#endif

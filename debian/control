@@ -1,0 +1,25 @@
+Source: gemian-leds
+Priority: optional
+Section: admin
+Maintainer: Adam Boardman <adamboardman@gmail.com>
+Standards-Version: 3.9.8
+Homepage: https://github.com/gemian/gemian-leds
+Vcs-Git: https://github.com/gemian/gemian-leds.git
+Vcs-Browser: https://github.com/gemian/gemian-leds
+Build-Depends:
+ debhelper (>= 10),
+ intltool,
+ cmake,
+
+
+Package: gemian-leds
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Conflicts:
+Replaces:
+Recommends:
+Description: Gemini LEDs controller
+ Simple DBUS reciever to set various states & animations for the LEDs.
