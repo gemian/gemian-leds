@@ -49,9 +49,13 @@ void LightState::handleConnectivityCellular(bool state) {
 void LightState::Update() {
     log->log(log_tag,"Update");
 
-    std::ofstream aw9120_operation;
-    aw9120_operation.open("/proc/aw9120_operation");
-    aw9120_operation << "7 " << capsLock << " " << powerState << " 0";
-    aw9120_operation << "6 " << connectivityCellular << " " << connectivityWifi << " " << connectivityBluetooth;
-    aw9120_operation.close();
+    std::ofstream aw9120_operation7;
+    aw9120_operation7.open("/proc/aw9120_operation");
+    aw9120_operation7 << "7 " << capsLock << " " << powerState << " 0";
+    aw9120_operation7.close();
+
+    std::ofstream aw9120_operation6;
+    aw9120_operation6.open("/proc/aw9120_operation");
+    aw9120_operation6 << "6 " << connectivityCellular << " " << connectivityWifi << " " << connectivityBluetooth;
+    aw9120_operation6.close();
 }
