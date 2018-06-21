@@ -8,7 +8,7 @@ Build-Depends:
  cmake,
  dbus,
  google-mock,
- libgmock-dev,
+ libgmock-dev <pkg.gemian-leds.buster>,
  libglib2.0-dev,
  pkg-config
 Standards-Version: 3.9.8
