@@ -28,6 +28,7 @@ private:
 
     std::shared_ptr<Log> const the_log;
     std::shared_ptr<LEDs> const leds;
+    std::shared_ptr<ConnectionWatcher> const connectionWatcher;
     std::shared_ptr<LightState> const lightState;
 
     bool running;

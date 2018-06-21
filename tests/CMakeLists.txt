@@ -12,7 +12,9 @@ add_executable(leds_tests
         DBusClient.cpp
         RunCommand.cpp
         RunDaemon.cpp
-        TestBase.cpp TestBase.h)
+        TestBase.cpp
+        TestConnectionWatcher.cpp
+        )
 
 target_link_libraries(leds_tests
         ${PROJECT_NAME_LOWER}-core

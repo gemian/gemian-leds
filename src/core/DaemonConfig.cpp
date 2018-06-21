@@ -6,6 +6,7 @@
 #include "ConsoleLog.h"
 #include "NullLog.h"
 #include "SyslogLog.h"
+#include "ConnectionWatcher.h"
 
 std::string DaemonConfig::the_dbus_bus_address() {
     auto const address = std::unique_ptr<gchar, decltype(&g_free)>{
@@ -34,6 +35,13 @@ std::shared_ptr<LEDs> DaemonConfig::the_leds() {
         leds = std::make_shared<LEDs>(the_log(), the_dbus_bus_address());
     }
     return leds;
+}
+
+std::shared_ptr<ConnectionWatcher> DaemonConfig::the_connectionWatcher() {
+    if (!connectionWatcher) {
+        connectionWatcher = std::make_shared<ConnectionWatcher>(the_log(), the_lightState(), the_dbus_bus_address());
+    }
+    return connectionWatcher;
 }
 
 std::shared_ptr<LightState> DaemonConfig::the_lightState() {

@@ -17,8 +17,9 @@ TestBase::TestBase(std::shared_ptr<DaemonConfig> const& daemon_config_ptr)
 TestBase::~TestBase() {
     daemon.flush();
     daemon.stop();
-    if (daemon_thread.joinable())
+    if (daemon_thread.joinable()) {
         daemon_thread.join();
+    }
 }
 
 void TestBase::runDaemon() {

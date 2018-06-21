@@ -23,8 +23,8 @@
 #include <ctime>
 #include <string>
 
-void ConsoleLog::log(char const* tag, char const* format, ...)
-{
+void ConsoleLog::log(char const* tag, char const* format, ...) {
+
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
 

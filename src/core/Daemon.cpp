@@ -24,6 +24,7 @@ char const* const log_tag = "Daemon";
 Daemon::Daemon(DaemonConfig& config)
         : the_log{config.the_log()},
           leds{config.the_leds()},
+          connectionWatcher{config.the_connectionWatcher()},
           lightState{config.the_lightState()},
           running{false}
 {
