@@ -7,11 +7,42 @@
 #include "../src/core/ConnectionWatcher.h"
 #include "TestBase.h"
 
+char const* const connman_technology_introspection = R"(
+<node>
+  <interface name='net.connman.Technology'>
+    <method name='GetProperties'>
+      <arg type='a{sv}' name='properties' direction='out'/>
+    </method>
+    <signal name='PropertyChanged'>
+      <arg type='s' name='name'/>
+      <arg type='v' name='value'/>
+    </signal>
+  </interface>
+</node>)";
+
 class FakeConnectionWatcherDBusService
 {
 public:
     FakeConnectionWatcherDBusService(std::string const& bus_address) : dbus_connection{bus_address}, dbus_event_loop{"FakeConnectionWatcher"} {
         dbus_connection.request_name("net.connman");
+
+        connman_handler_registation = dbus_event_loop.register_object_handler(
+                dbus_connection,
+                "/net/connman/technology/wifi",
+                connman_technology_introspection,
+                [this] (
+                        GDBusConnection* connection,
+                        gchar const* sender,
+                        gchar const* object_path,
+                        gchar const* interface_name,
+                        gchar const* method_name,
+                        GVariant* parameters,
+                        GDBusMethodInvocation* invocation)
+                {
+                    dbus_method_call(
+                            connection, sender, object_path, interface_name,
+                            method_name, parameters, invocation);
+                });
     }
 
     void emit_technology_powered(char const *technology_path, bool powered)
@@ -31,8 +62,28 @@ public:
     }
 
 private:
+    void dbus_method_call(
+            GDBusConnection* /*connection*/,
+            gchar const* /*sender*/,
+            gchar const* /*object_path*/,
+            gchar const* /*interface_name*/,
+            gchar const* method_name_cstr,
+            GVariant* /*parameters*/,
+            GDBusMethodInvocation* invocation)
+    {
+        std::string const method_name{method_name_cstr ? method_name_cstr : ""};
+        GVariant* reply{nullptr};
+
+        if (method_name == "GetProperties") {
+            reply = g_variant_new_parsed("({'Powered': <%b>},)", powered.load());
+        }
+
+        g_dbus_method_invocation_return_value(invocation, reply);
+    }
+
     DBusConnectionHandle dbus_connection;
     DBusEventLoop dbus_event_loop;
+    HandlerRegistration connman_handler_registation;
     std::atomic<bool> powered{false};
     std::string name{};
 };

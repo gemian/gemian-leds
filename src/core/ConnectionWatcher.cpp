@@ -1,6 +1,7 @@
 #include "ConnectionWatcher.h"
 #include "EventLoopHandlerRegistration.h"
 #include "ScopedGError.h"
+#include "DBusMessageHandle.h"
 
 auto const null_arg_handler = [](auto){};
 char const* const connection_bus_name = "net.connman";
@@ -94,33 +95,46 @@ void ConnectionWatcher::dbus_query_connectivity_state(char const *object_path) {
     auto constexpr null_cancellable = nullptr;
     ScopedGError error;
 
-    auto const result = g_dbus_connection_call_sync(
-            dbus_connection,
-            connection_bus_name,
-            object_path,
-            "org.freedesktop.DBus.Properties",
-            "Get",
-            g_variant_new("(ss)", connection_interface_name, "Powered"),
-            G_VARIANT_TYPE("(b)"),
-            G_DBUS_CALL_FLAGS_NONE,
-            timeout_default,
-            null_cancellable,
-            error);
+    auto const msg = g_dbus_message_new_method_call(connection_bus_name, object_path, connection_interface_name, "GetProperties");
+
+    auto const result = g_dbus_connection_send_message_with_reply_sync(
+            dbus_connection, msg, G_DBUS_SEND_MESSAGE_FLAGS_NONE, timeout_default, nullptr, null_cancellable, error);
 
     if (!result) {
         log->log(log_tag, "dbus_query_connectivity_state() failed to get Powered: %s", error.message_str().c_str());
         return;
     }
 
-    GVariant* property_variant{nullptr};
-    g_variant_get(result, "(v)", &property_variant);
+    auto body = g_dbus_message_get_body(result);
 
-    bool powered{false};
+    if (strcmp(g_variant_get_type_string(body), "(s)") == 0) {
+        char const* error_cstr{""};
+        g_variant_get(body, "(s)", &error_cstr);
+        log->log(log_tag, "dbus_query_connectivity_state() failed to get Powered: %s", error_cstr);
+        return;
+    }
 
-    g_variant_get(property_variant, "(b)", &powered);
+    GVariantIter* properties_iter{nullptr};
+    g_variant_get(body, "(a{sv})", &properties_iter);
 
-    g_variant_unref(property_variant);
-    g_variant_unref(result);
+    char const* key_cstr{""};
+    GVariant* value{nullptr};
 
-    saveStateForPath(object_path, powered);
+    while (g_variant_iter_next(properties_iter, "{&sv}", &key_cstr, &value))
+    {
+        auto const key_str = std::string{key_cstr ? key_cstr : ""};
+
+        if (key_str == "Powered") {
+            bool powered{false};
+
+            g_variant_get(value, "b", &powered);
+
+            saveStateForPath(object_path, powered);
+        }
+
+        g_variant_unref(value);
+    }
+
+    g_variant_iter_free(properties_iter);
+
 }
