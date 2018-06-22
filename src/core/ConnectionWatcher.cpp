@@ -1,5 +1,6 @@
 #include "ConnectionWatcher.h"
 #include "EventLoopHandlerRegistration.h"
+#include "ScopedGError.h"
 
 auto const null_arg_handler = [](auto){};
 char const* const connection_bus_name = "net.connman";
@@ -20,6 +21,10 @@ ConnectionWatcher::ConnectionWatcher(std::shared_ptr<Log> const& log, std::share
     dbus_signal_handler_registration_wifi = getRegistration(connection_object_path_wifi);
     dbus_signal_handler_registration_bluetooth = getRegistration(connection_object_path_bluetooth);
     dbus_signal_handler_registration_cellular = getRegistration(connection_object_path_cellular);
+
+    dbus_event_loop.enqueue([this] { dbus_query_connectivity_state(connection_object_path_wifi); }).get();
+    dbus_event_loop.enqueue([this] { dbus_query_connectivity_state(connection_object_path_bluetooth); }).get();
+    dbus_event_loop.enqueue([this] { dbus_query_connectivity_state(connection_object_path_cellular); }).get();
 }
 
 HandlerRegistration ConnectionWatcher::getRegistration(char const *object_path) {
@@ -64,16 +69,58 @@ void ConnectionWatcher::handle_dbus_signal(
             bool powered{false};
             g_variant_get(value, "b", &powered);
 
-            std::string const path = object_path;
-            if (path.find("wifi") != std::string::npos) {
-                lightState->handleConnectivityWifi(powered);
-            } else if (path.find("bluetooth") != std::string::npos) {
-                lightState->handleConnectivityBluetooth(powered);
-            } else if (path.find("cellular") != std::string::npos) {
-                lightState->handleConnectivityCellular(powered);
-            }
+            saveStateForPath(object_path, powered);
         }
 
         g_variant_unref(value);
     }
+}
+
+void ConnectionWatcher::saveStateForPath(const gchar *object_path, bool powered) const {
+    std::__cxx11::string const path = object_path;
+    if (path.find("wifi") != std::string::npos) {
+        lightState->handleConnectivityWifi(powered);
+    } else if (path.find("bluetooth") != std::string::npos) {
+        lightState->handleConnectivityBluetooth(powered);
+    } else if (path.find("cellular") != std::string::npos) {
+        lightState->handleConnectivityCellular(powered);
+    }
+}
+
+void ConnectionWatcher::dbus_query_connectivity_state(char const *object_path) {
+    log->log(log_tag, "dbus_query_connectivity_state()");
+
+    int constexpr timeout_default = -1;
+    auto constexpr null_cancellable = nullptr;
+    ScopedGError error;
+
+    auto const result = g_dbus_connection_call_sync(
+            dbus_connection,
+            connection_bus_name,
+            object_path,
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            g_variant_new("(ss)", connection_interface_name, "Powered"),
+            G_VARIANT_TYPE("(b)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            timeout_default,
+            null_cancellable,
+            error);
+
+    if (!result) {
+        log->log(log_tag, "dbus_query_connectivity_state() failed to get Powered: %s", error.message_str().c_str());
+        return;
+    }
+
+    GVariant* property_variant{nullptr};
+    g_variant_get(result, "(v)", &property_variant);
+
+    bool powered{false};
+
+    g_variant_get(property_variant, "(b)", &powered);
+
+    g_variant_unref(property_variant);
+    g_variant_unref(result);
+
+    saveStateForPath(object_path, powered);
 }

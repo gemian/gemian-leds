@@ -28,6 +28,7 @@ private:
             gchar const* interface_name,
             gchar const* signal_name,
             GVariant* parameters);
+    void dbus_query_connectivity_state(char const *object_path);
 
     std::shared_ptr<Log> const log;
     std::shared_ptr<LightState> const lightState;
@@ -38,6 +39,8 @@ private:
     HandlerRegistration dbus_signal_handler_registration_cellular;
 
     HandlerRegistration getRegistration(const char *object_path);
+
+    void saveStateForPath(const gchar *object_path, bool powered) const;
 };
 
 
