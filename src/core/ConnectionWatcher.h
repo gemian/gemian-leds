@@ -28,7 +28,6 @@ private:
             gchar const* interface_name,
             gchar const* signal_name,
             GVariant* parameters);
-    void dbus_PropertiesChanged(gchar const* object_path, GVariantIter* properties_iter);
 
     std::shared_ptr<Log> const log;
     std::shared_ptr<LightState> const lightState;

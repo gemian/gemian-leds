@@ -11,7 +11,7 @@ class FakeConnectionWatcherDBusService
 {
 public:
     FakeConnectionWatcherDBusService(std::string const& bus_address) : dbus_connection{bus_address}, dbus_event_loop{"FakeConnectionWatcher"} {
-        dbus_connection.request_name("net.connman.Technology");
+        dbus_connection.request_name("net.connman");
     }
 
     void emit_technology_powered(char const *technology_path, bool powered)
@@ -22,12 +22,10 @@ public:
                 dbus_connection,
                 nullptr,
                 technology_path,
-                "org.freedesktop.DBus.Properties",
-                "PropertiesChanged",
+                "net.connman.Technology",
+                "PropertyChanged",
                 g_variant_new_parsed(
-                        "(@s 'net.connman.Technology',"
-                        " @a{sv} { 'Powered' : <%b> },"
-                        " @as [])",
+                        "('Powered', <%b>)",
                         powered),
                 nullptr);
     }
