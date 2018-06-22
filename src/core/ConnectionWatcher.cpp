@@ -2,6 +2,7 @@
 #include "EventLoopHandlerRegistration.h"
 #include "ScopedGError.h"
 #include "DBusMessageHandle.h"
+#include "string.h"
 
 auto const null_arg_handler = [](auto){};
 char const* const connection_bus_name = "net.connman";
