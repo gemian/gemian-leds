@@ -46,18 +46,15 @@ void LightState::handleConnectivityCellular(bool state) {
 }
 
 void LightState::handleClearBlock() {
-    for (int i = 0; i < BLOCK_LED_COUNT; i++) {
-        for (int c = BLOCK_COLOUR_RED; c <= BLOCK_COLOUR_GREEN; c++) {
-            block[i][c] = 0;
-        }
-    }
+    steps.clear();
 }
 
-void LightState::handleSetBlockRGB(int led, unsigned int r, unsigned int g, unsigned int b) {
-    block[led][BLOCK_COLOUR_RED] = r;
-    block[led][BLOCK_COLOUR_GREEN] = g;
-    block[led][BLOCK_COLOUR_BLUE] = b;
+void LightState::handlePushBlock() {
+    Update();
+}
 
+void LightState::handleSetBlockRGB(int led, BlockColour colour, BlockStepType type, unsigned int value) {
+    steps.emplace_back(led, colour, type, value);
 }
 
 #define GCR   0x01
@@ -79,8 +76,8 @@ void LightState::handleSetBlockRGB(int led, unsigned int r, unsigned int g, unsi
 #define SETPWMI 0xA000
 #define WAITI 0x3800 // Pre 0=0.5ms, 1=16ms, T time=Pre*T
 #define SET_STEP_TMRI 0x8000 // Pre 0=0.5ms, 1=16ms. Ch: LED, Im: step time (Im+1)*Pre
-#define SETRAMPI_IN 0xE000
-#define SETRAMPI_OUT 0xC000
+#define RAMPI_IN 0xE000
+#define RAMPI_OUT 0xC000
 
 void LightState::WriteAW9120(unsigned int addr, unsigned int reg_data) {
     std::ofstream aw9120_reg;
@@ -146,7 +143,7 @@ void LightState::Update() {
     ResetSramLoadAddrAW9120();
     WriteSramProgAW9120(SET_STEP_TMRI + 0x0000 + 0x1f00 + 0x3); //step 2ms
     WriteSramProgAW9120(SETPWMI + 0x1F00 + 0x00); //all off
-    //START (PC=2)
+
     if (connectivityCellular) {
         WriteSramProgAW9120(SETPWMI + 0x0f00 + 0xa0);
     }
@@ -154,7 +151,11 @@ void LightState::Update() {
         WriteSramProgAW9120(SETPWMI + 0x1000 + 0x50);
     }
     if (connectivityBluetooth) {
-        WriteSramProgAW9120(SETPWMI + 0x1100 + 0xff);
+        if (connectivityWifi) {
+            WriteSramProgAW9120(SETPWMI + 0x1100 + 0xc0);
+        } else {
+            WriteSramProgAW9120(SETPWMI + 0x1100 + 0xff);
+        }
     }
     if (capsLock) {
         WriteSramProgAW9120(SETPWMI + 0x1200 + 0xa0);
@@ -163,21 +164,48 @@ void LightState::Update() {
         WriteSramProgAW9120(SETPWMI + 0x1300 + 0xff);
     }
     int loopStartPC = programCounter;
-    for (int i = 0; i < BLOCK_LED_COUNT; i++) {
-        int ledR = 0;
-        if (i == 1) {
-            ledR = 0xc00;
-        } else if (i > 1) {
-            ledR = ((i - 1) * 3) << 8;
-        }
-        int ledG = ledR + 0x100;
-        int ledB = ledG + 0x100;
+    bool delaySet = false;
+    for (auto step : steps) {
+        if (step.type == BlockStepDelay) {
+            //ignore led,colour
+            WriteSramProgAW9120(WAITI + 0x400 + step.value);
+            delaySet = true;
+        } else {
+            int awLed = 0;
+            if (step.led == 2) {
+                awLed = 0xc00;
+            } else if (step.led > 2) {
+                awLed = ((step.led - 2) * 3) << 8;
+            }
+            switch (step.colour) {
+                case BlockColourBlue:
+                    awLed += 0x200;
+                    break;
+                case BlockColourGreen:
+                    awLed += 0x100;
+                    break;
+                default:
+                    break;
+            }
 
-        WriteSramProgAW9120(SETPWMI + ledR + block[i][BLOCK_COLOUR_RED]);
-        WriteSramProgAW9120(SETPWMI + ledG + block[i][BLOCK_COLOUR_GREEN]);
-        WriteSramProgAW9120(SETPWMI + ledB + block[i][BLOCK_COLOUR_BLUE]);
+            switch (step.type) {
+                case BlockStepSetPWM:
+                    WriteSramProgAW9120(SETPWMI + awLed + step.value);
+                    break;
+                case BlockStepFadeIn:
+                    WriteSramProgAW9120(RAMPI_IN + awLed + step.value);
+                    break;
+                case BLockStepFadeOut:
+                    WriteSramProgAW9120(RAMPI_OUT + awLed + step.value);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
-    WriteSramProgAW9120(WAITI + 0x400 + 0x20);
+    if (!delaySet) {
+        WriteSramProgAW9120(WAITI + 0x400 + 0x20);
+    }
     WriteSramProgAW9120(loopStartPC);
 
     RunSramAW9120();

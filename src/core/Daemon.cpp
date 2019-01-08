@@ -70,11 +70,11 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                     }));
     registrations.push_back(
             leds->registerLEDsBlockHandler(
-                    [this](int led, int r, int g, int b)
+                    [this](int led, BlockColour colour, BlockStepType type, unsigned int value)
                     {
                         enqueue_action(
-                                [this, led, r, g, b] {
-                                    lightState->handleSetBlockRGB(led, r, g, b);
+                                [this, led, colour, type, value] {
+                                    lightState->handleSetBlockRGB(led, colour, type, value);
                                 });
                     }));
     registrations.push_back(
@@ -84,6 +84,15 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                         enqueue_action(
                                 [this] {
                                     lightState->handleClearBlock();
+                                });
+                    }));
+    registrations.push_back(
+            leds->registerLEDsPushBlockHandler(
+                    [this]()
+                    {
+                        enqueue_action(
+                                [this] {
+                                    lightState->handlePushBlock();
                                 });
                     }));
     return  registrations;

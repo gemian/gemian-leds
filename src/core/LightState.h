@@ -6,14 +6,35 @@
 #define GEMIAN_LEDS_LIGHTSTATE_H
 
 #include <fstream>
+#include <vector>
 
 class Log;
 
 static const int BLOCK_LED_COUNT = 5;
 static const int BLOCK_COLOUR_COUNT = 3;
-static const int BLOCK_COLOUR_RED = 0;
-static const int BLOCK_COLOUR_GREEN = 1;
-static const int BLOCK_COLOUR_BLUE = 2;
+typedef enum {
+    BlockColourRed,
+    BlockColourGreen,
+    BlockColourBlue,
+} BlockColour;
+typedef enum {
+    BlockStepSetPWM,
+    BlockStepFadeIn,
+    BLockStepFadeOut,
+    BlockStepDelay, //ignores led/colour components
+    BlockStepMax
+} BlockStepType;
+
+class BlockAnimStep {
+public:
+    BlockAnimStep(int led, BlockColour colour, BlockStepType type, unsigned int value) :
+            led(led), colour(colour), type(type), value(value) {}
+
+    int led;
+    BlockColour colour;
+    BlockStepType type;
+    unsigned int value;
+};
 
 class LightState {
 
@@ -30,16 +51,18 @@ public:
 
     void handleClearBlock();
 
-    void handleSetBlockRGB(int led, unsigned int r, unsigned int g, unsigned int b);
+    void handlePushBlock();
+
+    void handleSetBlockRGB(int led, BlockColour colour, BlockStepType type, unsigned int value);
+
+    void Update();
 
     bool capsLock = false;
     int powerState = 0;
     bool connectivityWifi = false;
     bool connectivityBluetooth = false;
     bool connectivityCellular = false;
-    unsigned int block[BLOCK_LED_COUNT][BLOCK_COLOUR_COUNT];
-
-    void Update();
+    std::vector<BlockAnimStep> steps;
 
     std::shared_ptr<Log> const log;
 

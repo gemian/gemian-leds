@@ -13,11 +13,12 @@
 #include "HandlerRegistration.h"
 #include "DBusConnectionHandle.h"
 #include "DBusEventLoop.h"
+#include "LightState.h"
 
 using LEDsCapsLockHandler = std::function<void(bool)>;
 using LEDsClearBlockHandler = std::function<void()>;
-using LEDsBlockHandler = std::function<void(int,int,int,int)>;
-
+using LEDsPushBlockHandler = std::function<void()>;
+using LEDsBlockHandler = std::function<void(int,BlockColour,BlockStepType,unsigned int)>;
 
 class LEDs {
 public:
@@ -27,6 +28,7 @@ public:
     void start_processing();
     HandlerRegistration registerLEDsCapsLockHandler(LEDsCapsLockHandler const& handler);
     HandlerRegistration registerLEDsClearBlockHandler(LEDsClearBlockHandler const& handler);
+    HandlerRegistration registerLEDsPushBlockHandler(LEDsPushBlockHandler const& handler);
     HandlerRegistration registerLEDsBlockHandler(LEDsBlockHandler const& handler);
 
 protected:
@@ -51,7 +53,14 @@ private:
 
     LEDsCapsLockHandler ledsCapsLockHandler;
     LEDsClearBlockHandler ledsClearBlockHandler;
+    LEDsPushBlockHandler ledsPushBlockHandler;
     LEDsBlockHandler ledsBlockHandler;
+
+    bool verifyLed(guint led) const;
+
+    bool verifyType(guint type) const;
+
+    bool verifyValue(guint type, guint value) const;
 };
 
 
