@@ -26,4 +26,4 @@ Conflicts:
 Replaces:
 Recommends:
 Description: Gemini LEDs controller
- Simple DBUS reciever to set various states & animations for the LEDs.
+ Simple DBUS receiver to set various states & animations for the LEDs.
