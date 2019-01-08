@@ -11,7 +11,6 @@ char const *const log_tag = "LightState";
 
 LightState::LightState(std::shared_ptr<Log> const &the_log) : log{the_log} {
     handleClearBlock();
-    testOStream.open("/tmp/aw9120_reg");
 }
 
 void LightState::handleCapsLock(bool state) {
@@ -89,9 +88,6 @@ void LightState::WriteAW9120(unsigned int addr, unsigned int reg_data) {
     aw9120_reg.open("/proc/aw9120_reg");
     aw9120_reg << "0x" << std::hex << addr << " 0x" << std::hex << reg_data << std::endl;
     aw9120_reg.close();
-
-    testOStream << "0x" << std::hex << addr << " 0x" << std::hex << reg_data << std::endl;
-    testOStream.flush();
 }
 
 void LightState::DisableAW9120() {

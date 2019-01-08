@@ -61,7 +61,6 @@ private:
     void WriteSramProgAW9120(unsigned int reg_data);
 
     int programCounter;
-    std::ofstream testOStream;
 
 };
 
