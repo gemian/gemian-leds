@@ -13,3 +13,8 @@ Support should include:
 The general idea is that we monitor dbus for any related messages to changes in state that we wish to display, then update all the LEDs at once. This is not strictly necessary with the current kernel interface but if we want to use PWM control in the future it looks like you have to program all the LEDs at once.
 
 We also need to add a settings UI so that users can choose not to display some things or to disable when device is open or to set as extra dim/off at night time etc.
+
+To enable tests to run you will probably have to install the dbus config file:
+```
+sudo cp src/org.thinkglobally.GemianLEDs.conf /etc/dbus-1/system.d/
+```

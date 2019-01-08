@@ -68,7 +68,15 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                                     lightState->handleCapsLock(state);
                                 });
                     }));
-
+    registrations.push_back(
+            leds->registerLEDsBlockHandler(
+                    [this](int led, int r, int g, int b)
+                    {
+                        enqueue_action(
+                                [this, led, r, g, b] {
+                                    lightState->handleSetBlockRGB(led, r, g, b);
+                                });
+                    }));
     return  registrations;
 }
 

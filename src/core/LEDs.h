@@ -15,6 +15,8 @@
 #include "DBusEventLoop.h"
 
 using LEDsCapsLockHandler = std::function<void(bool)>;
+using LEDsClearBlockHandler = std::function<void()>;
+using LEDsBlockHandler = std::function<void(int,int,int,int)>;
 
 
 class LEDs {
@@ -24,6 +26,8 @@ public:
 
     void start_processing();
     HandlerRegistration registerLEDsCapsLockHandler(LEDsCapsLockHandler const& handler);
+    HandlerRegistration registerLEDsClearBlockHandler(LEDsClearBlockHandler const& handler);
+    HandlerRegistration registerLEDsBlockHandler(LEDsBlockHandler const& handler);
 
 protected:
     LEDs() = default;
@@ -46,6 +50,8 @@ private:
     HandlerRegistration dbus_signal_handler_registration;
 
     LEDsCapsLockHandler ledsCapsLockHandler;
+    LEDsClearBlockHandler ledsClearBlockHandler;
+    LEDsBlockHandler ledsBlockHandler;
 };
 
 

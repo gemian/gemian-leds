@@ -5,7 +5,9 @@
 #include "LEDs.h"
 #include "EventLoopHandlerRegistration.h"
 
-auto const null_arg_handler = [](auto){};
+auto const null_arg0_handler = [](){};
+auto const null_arg1_handler = [](auto){};
+auto const null_arg4_handler = [](auto,auto,auto,auto){};
 char const* const leds_bus_name = "org.thinkglobally.Gemian.LEDs";
 char const* const leds_object_path = "/org/thinkglobally/Gemian/LEDs";
 char const* const leds_interface_name = "org.thinkglobally.Gemian.LEDs";
@@ -17,6 +19,14 @@ char const* const leds_service_introspection = R"(
         <method name='SetCapsLock'>
             <arg type="b" name="state" direction='in'></arg>
         </method>
+        <method name='SetLEDBlock'>
+            <arg type="u" name="led" direction='in'></arg>
+            <arg type="u" name="red" direction='in'></arg>
+            <arg type="u" name="green" direction='in'></arg>
+            <arg type="u" name="blue" direction='in'></arg>
+        </method>
+        <method name='ClearLEDBlock'>
+        </method>
     </interface>
 </node>)";
 
@@ -24,7 +34,7 @@ LEDs::LEDs(std::shared_ptr<Log> const& log, std::string const& dbus_bus_address)
         : log{log},
           dbus_connection{dbus_bus_address},
           dbus_event_loop{"LEDs"},
-          ledsCapsLockHandler{null_arg_handler} {
+          ledsCapsLockHandler{null_arg1_handler} {
 }
 
 void LEDs::start_processing() {
@@ -68,7 +78,23 @@ HandlerRegistration LEDs::registerLEDsCapsLockHandler(LEDsCapsLockHandler const 
     return EventLoopHandlerRegistration {
             dbus_event_loop,
             [this, &handler] { this->ledsCapsLockHandler = handler; },
-            [this] { this->ledsCapsLockHandler = null_arg_handler; }};
+            [this] { this->ledsCapsLockHandler = null_arg1_handler; }};
+}
+
+HandlerRegistration LEDs::registerLEDsClearBlockHandler(LEDsClearBlockHandler const &handler) {
+
+    return EventLoopHandlerRegistration {
+            dbus_event_loop,
+            [this, &handler] { this->ledsClearBlockHandler = handler; },
+            [this] { this->ledsClearBlockHandler = null_arg0_handler; }};
+}
+
+HandlerRegistration LEDs::registerLEDsBlockHandler(LEDsBlockHandler const &handler) {
+
+    return EventLoopHandlerRegistration {
+            dbus_event_loop,
+            [this, &handler] { this->ledsBlockHandler = handler; },
+            [this] { this->ledsBlockHandler = null_arg4_handler; }};
 }
 
 void LEDs::dbus_method_call(
@@ -88,6 +114,16 @@ void LEDs::dbus_method_call(
         g_variant_get(parameters, "(b)", &state);
         ledsCapsLockHandler(state);
         log->log(log_tag,"caps %d", state);
+        g_dbus_method_invocation_return_value(invocation, NULL);
+    } else if (method_name == "SetLEDBlock") {
+        guint led{0},r{0},g{0},b{0};
+        g_variant_get(parameters, "(uuuu)", &led, &r, &g, &b);
+        ledsBlockHandler(led,r,g,b);
+        log->log(log_tag,"block %u(%u,%u,%u)", led, r, g, b);
+        g_dbus_method_invocation_return_value(invocation, NULL);
+    } else if (method_name == "ClearLEDBlock") {
+        ledsClearBlockHandler();
+        log->log(log_tag,"clear block");
         g_dbus_method_invocation_return_value(invocation, NULL);
     } else if (method_name == "Power") {
     } else {

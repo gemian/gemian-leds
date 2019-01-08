@@ -4,7 +4,7 @@
 #include "DBusMessageHandle.h"
 #include "string.h"
 
-auto const null_arg_handler = [](auto){};
+auto const null_arg1_handler = [](auto){};
 char const* const connection_bus_name = "net.connman";
 char const* const connection_object_path_wifi = "/net/connman/technology/wifi";
 char const* const connection_object_path_bluetooth = "/net/connman/technology/bluetooth";
