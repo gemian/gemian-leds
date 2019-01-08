@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+
+import dbus
+
+bus = dbus.SystemBus()
+
+leds = dbus.Interface(bus.get_object('org.thinkglobally.Gemian.LEDs', '/org/thinkglobally/Gemian/LEDs'),
+						'org.thinkglobally.Gemian.LEDs')
+
+leds.ClearLEDBlockAnimation()
+leds.SetLEDBlockStep(4,1,2,200)
+leds.SetLEDBlockStep(5,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(5,1,2,200)
+leds.SetLEDBlockStep(4,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(4,1,2,200)
+leds.SetLEDBlockStep(3,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(3,1,2,200)
+leds.SetLEDBlockStep(2,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(2,1,2,200)
+leds.SetLEDBlockStep(1,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(1,1,2,200)
+leds.SetLEDBlockStep(2,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(2,1,2,200)
+leds.SetLEDBlockStep(3,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.SetLEDBlockStep(3,1,2,200)
+leds.SetLEDBlockStep(4,1,1,200)
+leds.SetLEDBlockStep(1,0,3,20) #next frame
+leds.PushLEDBlockAnimation()
+
