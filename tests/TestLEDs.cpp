@@ -54,8 +54,8 @@ struct MockHandler {
     }
 
     void clearBlock() {
-        for (int i=0; i<BLOCK_COLOUR_COUNT; i++) {
-            for (int c=0; c<BLOCK_COLOUR_COUNT; c++) {
+        for (int i = 0; i < BLOCK_COLOUR_COUNT; i++) {
+            for (int c = 0; c < BLOCK_COLOUR_COUNT; c++) {
                 leds[i][c] = 0;
             }
         }

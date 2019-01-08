@@ -77,6 +77,15 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                                     lightState->handleSetBlockRGB(led, r, g, b);
                                 });
                     }));
+    registrations.push_back(
+            leds->registerLEDsClearBlockHandler(
+                    [this]()
+                    {
+                        enqueue_action(
+                                [this] {
+                                    lightState->handleClearBlock();
+                                });
+                    }));
     return  registrations;
 }
 
