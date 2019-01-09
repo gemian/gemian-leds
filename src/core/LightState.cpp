@@ -193,7 +193,7 @@ void LightState::Update() {
     if (powerState) {
         WriteSramProgAW9120(SETPWMI + CH_7_BLUE + 0xff);
     }
-    int loopStartPC = programCounter;
+    unsigned int loopStartPC = programCounter;
     bool delaySet = false;
     for (auto step : steps) {
         if (step.type == BlockStepDelay) {

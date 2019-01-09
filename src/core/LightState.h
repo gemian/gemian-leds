@@ -86,7 +86,7 @@ private:
 
     unsigned int maxLED(int led) const;
 
-    int programCounter;
+    unsigned int programCounter;
 
     uint64_t powerLevels;
 };
