@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+
+import dbus
+
+bus = dbus.SystemBus()
+
+leds = dbus.Interface(bus.get_object('org.thinkglobally.Gemian.LEDs', '/org/thinkglobally/Gemian/LEDs'),
+						'org.thinkglobally.Gemian.LEDs')
+
+leds.SetTorch(1,1000*60*5)

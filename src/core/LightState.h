@@ -53,6 +53,8 @@ public:
 
     void handleSetBlockRGB(int led, BlockColour colour, BlockStepType type, unsigned int value);
 
+    void handleTorch(bool on);
+
     void Update();
 
     bool capsLock = false;
@@ -82,7 +84,11 @@ private:
 
     int AWLEDCodeForStep(const BlockAnimStep &step) const;
 
+    unsigned int maxLED(int led) const;
+
     int programCounter;
+
+    uint64_t powerLevels;
 };
 
 

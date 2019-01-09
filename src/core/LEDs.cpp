@@ -7,6 +7,7 @@
 
 auto const null_arg0_handler = []() {};
 auto const null_arg1_handler = [](auto) {};
+auto const null_arg2_handler = [](auto, auto) {};
 auto const null_arg4_handler = [](auto, auto, auto, auto) {};
 char const *const leds_bus_name = "org.thinkglobally.Gemian.LEDs";
 char const *const leds_object_path = "/org/thinkglobally/Gemian/LEDs";
@@ -28,6 +29,10 @@ char const *const leds_service_introspection = R"(
         <method name='ClearLEDBlockAnimation'>
         </method>
         <method name='PushLEDBlockAnimation'>
+        </method>
+        <method name='SetTorch'>
+            <arg type="b" name="on" direction='in'></arg>
+            <arg type="u" name="duration" direction='in'></arg>
         </method>
     </interface>
 </node>)";
@@ -103,6 +108,14 @@ HandlerRegistration LEDs::registerLEDsBlockHandler(LEDsBlockHandler const &handl
             [this] { this->ledsBlockHandler = null_arg4_handler; }};
 }
 
+HandlerRegistration LEDs::registerLEDsTorchHandler(LEDsTorchHandler const &handler) {
+
+    return EventLoopHandlerRegistration{
+            dbus_event_loop,
+            [this, &handler] { this->ledsTorchHandler = handler; },
+            [this] { this->ledsTorchHandler = null_arg1_handler; }};
+}
+
 void LEDs::dbus_method_call(
         GDBusConnection * /*connection*/,
         gchar const *sender_cstr,
@@ -138,7 +151,22 @@ void LEDs::dbus_method_call(
         ledsPushBlockHandler();
         log->log(log_tag, "push animation");
         g_dbus_method_invocation_return_value(invocation, nullptr);
-    } else if (method_name == "Power") {
+    } else if (method_name == "SetTorch") {
+        gboolean on{FALSE};
+        guint duration{0};
+        g_variant_get(parameters, "(bu)", &on, &duration);
+        ledsTorchHandler(static_cast<bool>(on));
+        if (on && duration > 0) {
+            std::chrono::milliseconds after(duration);
+            dbus_event_loop.schedule_in(
+                    after,
+                    [this] {
+                        ledsTorchHandler(false);
+                    });
+        }
+
+        log->log(log_tag, "torch %d(%d)", on, duration);
+        g_dbus_method_invocation_return_value(invocation, nullptr);
     } else {
         log->log(log_tag, "dbus_unknown_method(%s,%s)", sender.c_str(), method_name.c_str());
 
@@ -147,7 +175,9 @@ void LEDs::dbus_method_call(
     }
 }
 
-bool LEDs::verifyValue(guint type, guint value) const { return ((type == BlockStepDelay && value < 1024) || value < 256); }
+bool LEDs::verifyValue(guint type, guint value) const {
+    return ((type == BlockStepDelay && value < 1024) || value < 256);
+}
 
 bool LEDs::verifyType(guint type) const { return type < BlockStepMax; }
 

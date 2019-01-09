@@ -18,33 +18,43 @@
 using LEDsCapsLockHandler = std::function<void(bool)>;
 using LEDsClearBlockHandler = std::function<void()>;
 using LEDsPushBlockHandler = std::function<void()>;
-using LEDsBlockHandler = std::function<void(int,BlockColour,BlockStepType,unsigned int)>;
+using LEDsBlockHandler = std::function<void(int, BlockColour, BlockStepType, unsigned int)>;
+using LEDsTorchHandler = std::function<void(bool)>;
 
 class LEDs {
 public:
-    LEDs(std::shared_ptr<Log> const& log, std::string const& dbus_bus_address);
+    LEDs(std::shared_ptr<Log> const &log, std::string const &dbus_bus_address);
+
     ~LEDs() = default;
 
     void start_processing();
-    HandlerRegistration registerLEDsCapsLockHandler(LEDsCapsLockHandler const& handler);
-    HandlerRegistration registerLEDsClearBlockHandler(LEDsClearBlockHandler const& handler);
-    HandlerRegistration registerLEDsPushBlockHandler(LEDsPushBlockHandler const& handler);
-    HandlerRegistration registerLEDsBlockHandler(LEDsBlockHandler const& handler);
+
+    HandlerRegistration registerLEDsCapsLockHandler(LEDsCapsLockHandler const &handler);
+
+    HandlerRegistration registerLEDsClearBlockHandler(LEDsClearBlockHandler const &handler);
+
+    HandlerRegistration registerLEDsPushBlockHandler(LEDsPushBlockHandler const &handler);
+
+    HandlerRegistration registerLEDsBlockHandler(LEDsBlockHandler const &handler);
+
+    HandlerRegistration registerLEDsTorchHandler(LEDsTorchHandler const &handler);
 
 protected:
     LEDs() = default;
-    LEDs(LEDs const&) = default;
-    LEDs& operator=(LEDs const&) = default;
+
+    LEDs(LEDs const &) = default;
+
+    LEDs &operator=(LEDs const &) = default;
 
 private:
     void dbus_method_call(
-            GDBusConnection* connection,
-            gchar const* sender_cstr,
-            gchar const* object_path_cstr,
-            gchar const* interface_name_cstr,
-            gchar const* method_name_cstr,
-            GVariant* parameters,
-            GDBusMethodInvocation* invocation);
+            GDBusConnection *connection,
+            gchar const *sender_cstr,
+            gchar const *object_path_cstr,
+            gchar const *interface_name_cstr,
+            gchar const *method_name_cstr,
+            GVariant *parameters,
+            GDBusMethodInvocation *invocation);
 
     std::shared_ptr<Log> const log;
     DBusConnectionHandle dbus_connection;
@@ -55,6 +65,7 @@ private:
     LEDsClearBlockHandler ledsClearBlockHandler;
     LEDsPushBlockHandler ledsPushBlockHandler;
     LEDsBlockHandler ledsBlockHandler;
+    LEDsTorchHandler ledsTorchHandler;
 
     bool verifyLed(guint led) const;
 

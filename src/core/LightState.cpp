@@ -9,8 +9,12 @@
 
 char const *const log_tag = "LightState";
 
+static const uint64_t POWER_LEVEL_20b001s = 0x249249249249249;
+static const uint64_t POWER_LEVEL_20b111s = 0xfffffffffffffff;
+
 LightState::LightState(std::shared_ptr<Log> const &the_log) : log{the_log} {
     handleClearBlock();
+    powerLevels = POWER_LEVEL_20b001s;
 }
 
 void LightState::handleCapsLock(bool state) {
@@ -55,6 +59,17 @@ void LightState::handlePushBlock() {
 
 void LightState::handleSetBlockRGB(int led, BlockColour colour, BlockStepType type, unsigned int value) {
     steps.emplace_back(led, colour, type, value);
+}
+
+void LightState::handleTorch(bool on) {
+    powerLevels = on ? POWER_LEVEL_20b111s : POWER_LEVEL_20b001s;
+    handleClearBlock();
+    if (on) {
+        steps.emplace_back(0x1f, BlockColourRed, BlockStepSetPWM, 0xff);
+    }
+    handlePushBlock();
+
+    Update();
 }
 
 #define GCR   0x01
@@ -107,15 +122,19 @@ void LightState::EnableAW9120() {
 }
 
 void LightState::SetupAW9120() {
-    WriteAW9120(IMAX1, 0x1111);    // IMAX1-LED1~LED4 Current
-    WriteAW9120(IMAX2, 0x1111);    // IMAX2-LED5~LED8 Current
-    WriteAW9120(IMAX3, 0x1111);    // IMAX3-LED9~LED12 Current
-    WriteAW9120(IMAX4, 0x1111);    // IMAX4-LED13~LED16 Current
-    WriteAW9120(IMAX5, 0x1111);    // IMAX5-LED17~LED20 Current
+    WriteAW9120(IMAX1, maxLED(4) + maxLED(3) + maxLED(2) + maxLED(1));    // IMAX1-LED1~LED4 Current
+    WriteAW9120(IMAX2, maxLED(8) + maxLED(7) + maxLED(6) + maxLED(5));    // IMAX2-LED5~LED8 Current
+    WriteAW9120(IMAX3, maxLED(12) + maxLED(11) + maxLED(10) + maxLED(9));    // IMAX3-LED9~LED12 Current
+    WriteAW9120(IMAX4, maxLED(16) + maxLED(15) + maxLED(14) + maxLED(13));    // IMAX4-LED13~LED16 Current
+    WriteAW9120(IMAX5, maxLED(20) + maxLED(19) + maxLED(18) + maxLED(17));    // IMAX5-LED17~LED20 Current
     WriteAW9120(LER1, 0x0FFF);    // LER1-LED1~LED12 Enable
     WriteAW9120(LER2, 0x00FF);    // LER2-LED13~LED20 Enable
     WriteAW9120(CTRS1, 0x0000);    // CTRS1-LED1~LED12: SRAM Control
     WriteAW9120(CTRS2, 0x0000);    // CTRS2-LED13~LED20: SRAM Control
+}
+
+unsigned int LightState::maxLED(int led) const {
+    return static_cast<unsigned int>(((powerLevels >> ((led - 1) * 3)) & 0x7) << (led % 4) * 4);
 }
 
 void LightState::HoldSramAW9120() {
@@ -210,19 +229,21 @@ void LightState::Update() {
 int LightState::AWLEDCodeForStep(const BlockAnimStep &step) const {
     int awLed = 0;
     if (step.led == 2) {
-                awLed = 0xc00;
-            } else if (step.led > 2) {
-                awLed = ((step.led - 2) * 3) << 8;
-            }
+        awLed = 0xc00;
+    } else if (step.led > 2 && step.led < 6) {
+        awLed = ((step.led - 2) * 3) << 8;
+    } else if (step.led == 0x1f && step.colour == BlockColourRed) {
+        awLed = CH_ALL_LEDS;
+    }
     switch (step.colour) {
-                case BlockColourBlue:
-                    awLed += 0x200;
-                    break;
-                case BlockColourGreen:
-                    awLed += 0x100;
-                    break;
-                default:
-                    break;
-            }
+        case BlockColourBlue:
+            awLed += 0x200;
+            break;
+        case BlockColourGreen:
+            awLed += 0x100;
+            break;
+        default:
+            break;
+    }
     return awLed;
 }

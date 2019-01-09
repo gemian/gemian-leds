@@ -41,6 +41,11 @@ struct LEDsDBusClient : DBusClient {
     void emitPushAnimation() {
         invoke_with_reply<DBusAsyncReplyVoid>(GEMINI_LEDS_DESTINATION, "PushLEDBlockAnimation", nullptr);
     }
+
+    void emitSetTorch(bool on, unsigned int duration) {
+        invoke_with_reply<DBusAsyncReplyVoid>(GEMINI_LEDS_DESTINATION, "SetTorch", g_variant_new("(bu)", on, duration));
+    }
+
 };
 
 std::chrono::seconds const default_timeout{3};
@@ -63,9 +68,14 @@ struct MockHandler {
         push = true;
     }
 
+    void torch(bool on) {
+        torchOn = on;
+    }
+
     std::vector<BlockAnimStep> steps;
     bool caps;
     bool push;
+    bool torchOn;
 };
 
 struct ALEDs : TestBase {
@@ -89,6 +99,11 @@ struct ALEDs : TestBase {
                 leds.registerLEDsBlockHandler(
                         [this](int led, BlockColour colour, BlockStepType type, unsigned int value) {
                             mockHandler.block(led, colour, type, value);
+                        }));
+        registrations.push_back(
+                leds.registerLEDsTorchHandler(
+                        [this](bool on) {
+                            mockHandler.torch(on);
                         }));
         leds.start_processing();
     }
@@ -265,4 +280,30 @@ TEST_CASE("set valid delay 1023") {
     REQUIRE(aLEDs.mockHandler.steps[0].type == BlockStepDelay);
     REQUIRE(aLEDs.mockHandler.steps[0].value == 1023);
     REQUIRE(aLEDs.fake_log.contains_line({"LEDs: block 1(0,3,1023)"}));
+}
+
+TEST_CASE("torch on") {
+    ALEDs aLEDs;
+    aLEDs.mockHandler.torchOn = false;
+
+    WaitCondition request_processed;
+
+    aLEDs.client.emitSetTorch(true, 300);
+
+    request_processed.wait_for(default_timeout);
+    REQUIRE(aLEDs.mockHandler.torchOn);
+    REQUIRE(aLEDs.fake_log.contains_line({"LEDs: torch 1(300)"}));
+}
+
+TEST_CASE("torch off") {
+    ALEDs aLEDs;
+    aLEDs.mockHandler.torchOn = true;
+
+    WaitCondition request_processed;
+
+    aLEDs.client.emitSetTorch(false, 0);
+
+    request_processed.wait_for(default_timeout);
+    REQUIRE(!aLEDs.mockHandler.torchOn);
+    REQUIRE(aLEDs.fake_log.contains_line({"LEDs: torch 0(0)"}));
 }

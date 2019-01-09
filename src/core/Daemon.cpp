@@ -95,6 +95,15 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                                     lightState->handlePushBlock();
                                 });
                     }));
+    registrations.push_back(
+            leds->registerLEDsTorchHandler(
+                    [this](bool on)
+                    {
+                        enqueue_action(
+                                [this, on] {
+                                    lightState->handleTorch(on);
+                                });
+                    }));
     return  registrations;
 }
 
