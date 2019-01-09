@@ -75,9 +75,20 @@ void LightState::handleSetBlockRGB(int led, BlockColour colour, BlockStepType ty
 
 #define SETPWMI 0xA000
 #define WAITI 0x3800 // Pre 0=0.5ms, 1=16ms, T time=Pre*T
+#define WAIT_PRE_05MS 0x000
+#define WAIT_PRE_16MS 0x400
+#define MAX_WAIT 0x3ff
 #define SET_STEP_TMRI 0x8000 // Pre 0=0.5ms, 1=16ms. Ch: LED, Im: step time (Im+1)*Pre
+#define SET_STEP_PRE_05MS 0x00
+#define SET_STEP_PRE_16MS 0x80
 #define RAMPI_IN 0xE000
 #define RAMPI_OUT 0xC000
+#define CH_ALL_LEDS 0x1f00
+#define CH_6_RED 0x0f00
+#define CH_6_GREEN 0x1000
+#define CH_6_BLUE 0x1100
+#define CH_7_RED 0x1200
+#define CH_7_BLUE 0x1300
 
 void LightState::WriteAW9120(unsigned int addr, unsigned int reg_data) {
     std::ofstream aw9120_reg;
@@ -141,52 +152,37 @@ void LightState::Update() {
 
     //prog - max 256 instructions
     ResetSramLoadAddrAW9120();
-    WriteSramProgAW9120(SET_STEP_TMRI + 0x0000 + 0x1f00 + 0x3); //step 2ms
-    WriteSramProgAW9120(SETPWMI + 0x1F00 + 0x00); //all off
+    WriteSramProgAW9120(SET_STEP_TMRI + CH_ALL_LEDS + SET_STEP_PRE_05MS + 0x3); //step 2ms
+    WriteSramProgAW9120(SETPWMI + CH_ALL_LEDS + 0x00); //all off
 
     if (connectivityCellular) {
-        WriteSramProgAW9120(SETPWMI + 0x0f00 + 0xa0);
+        WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
     }
     if (connectivityWifi) {
-        WriteSramProgAW9120(SETPWMI + 0x1000 + 0x50);
+        WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
     }
     if (connectivityBluetooth) {
         if (connectivityWifi) {
-            WriteSramProgAW9120(SETPWMI + 0x1100 + 0xc0);
+            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xc0);
         } else {
-            WriteSramProgAW9120(SETPWMI + 0x1100 + 0xff);
+            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
         }
     }
     if (capsLock) {
-        WriteSramProgAW9120(SETPWMI + 0x1200 + 0xa0);
+        WriteSramProgAW9120(SETPWMI + CH_7_RED + 0xa0);
     }
     if (powerState) {
-        WriteSramProgAW9120(SETPWMI + 0x1300 + 0xff);
+        WriteSramProgAW9120(SETPWMI + CH_7_BLUE + 0xff);
     }
     int loopStartPC = programCounter;
     bool delaySet = false;
     for (auto step : steps) {
         if (step.type == BlockStepDelay) {
             //ignore led,colour
-            WriteSramProgAW9120(WAITI + 0x400 + step.value);
+            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + step.value);
             delaySet = true;
         } else {
-            int awLed = 0;
-            if (step.led == 2) {
-                awLed = 0xc00;
-            } else if (step.led > 2) {
-                awLed = ((step.led - 2) * 3) << 8;
-            }
-            switch (step.colour) {
-                case BlockColourBlue:
-                    awLed += 0x200;
-                    break;
-                case BlockColourGreen:
-                    awLed += 0x100;
-                    break;
-                default:
-                    break;
-            }
+            int awLed = AWLEDCodeForStep(step);
 
             switch (step.type) {
                 case BlockStepSetPWM:
@@ -204,9 +200,29 @@ void LightState::Update() {
         }
     }
     if (!delaySet) {
-        WriteSramProgAW9120(WAITI + 0x400 + 0x20);
+        WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + MAX_WAIT);
     }
     WriteSramProgAW9120(loopStartPC);
 
     RunSramAW9120();
+}
+
+int LightState::AWLEDCodeForStep(const BlockAnimStep &step) const {
+    int awLed = 0;
+    if (step.led == 2) {
+                awLed = 0xc00;
+            } else if (step.led > 2) {
+                awLed = ((step.led - 2) * 3) << 8;
+            }
+    switch (step.colour) {
+                case BlockColourBlue:
+                    awLed += 0x200;
+                    break;
+                case BlockColourGreen:
+                    awLed += 0x100;
+                    break;
+                default:
+                    break;
+            }
+    return awLed;
 }

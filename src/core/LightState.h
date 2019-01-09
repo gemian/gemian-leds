@@ -10,8 +10,6 @@
 
 class Log;
 
-static const int BLOCK_LED_COUNT = 5;
-static const int BLOCK_COLOUR_COUNT = 3;
 typedef enum {
     BlockColourRed,
     BlockColourGreen,
@@ -63,7 +61,6 @@ public:
     bool connectivityBluetooth = false;
     bool connectivityCellular = false;
     std::vector<BlockAnimStep> steps;
-
     std::shared_ptr<Log> const log;
 
 private:
@@ -83,8 +80,9 @@ private:
 
     void WriteSramProgAW9120(unsigned int reg_data);
 
-    int programCounter;
+    int AWLEDCodeForStep(const BlockAnimStep &step) const;
 
+    int programCounter;
 };
 
 
