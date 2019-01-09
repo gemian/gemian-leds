@@ -27,3 +27,14 @@ Replaces:
 Recommends:
 Description: Gemini LEDs controller
  Simple DBUS receiver to set various states & animations for the LEDs.
+
+Package: gemian-leds-scripts
+Architecture: all
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         gemian-leds (>= ${source:Version}),
+	 python3,
+	 python3-dbus,
+	 python3-gi
+Description: Gemini LEDs controller (test and maintenance script files)
+ This package includes test and maintenance scripts.
