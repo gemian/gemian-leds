@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+
+import dbus
+
+bus = dbus.SystemBus()
+
+leds = dbus.Interface(bus.get_object('org.thinkglobally.Gemian.LEDs', '/org/thinkglobally/Gemian/LEDs'),
+						'org.thinkglobally.Gemian.LEDs')
+
+leds.ClearLEDBlockAnimation()
+leds.SetLEDBlockStep(3,1,1,255) #animate middle to full
+leds.SetLEDBlockStep(1,0,3,10) #give middle a head start
+leds.SetLEDBlockStep(2,1,1,60) #animate left to middle
+leds.SetLEDBlockStep(4,1,1,60) #animate right to middle
+leds.SetLEDBlockStep(1,0,3,30) #delay with bright leds
+leds.SetLEDBlockStep(3,1,2,255) #fade middle to blank
+leds.SetLEDBlockStep(1,0,3,10) #give middle a head start
+leds.SetLEDBlockStep(2,1,2,255) #fade to blank
+leds.SetLEDBlockStep(4,1,2,255) #fade to blank
+leds.SetLEDBlockStep(1,0,3,60) #delay with leds off
+leds.PushLEDBlockAnimation()
+
