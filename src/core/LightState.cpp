@@ -219,7 +219,27 @@ void LightState::Update() {
         }
     }
     if (!delaySet) {
-        WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + MAX_WAIT);
+        WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
+        WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
+        WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
+        if (connectivityCellular) {
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
+            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
+        }
+        if (connectivityWifi) {
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
+            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
+        }
+        if (connectivityBluetooth) {
+            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
+            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
+        }
+        if (!connectivityCellular && !connectivityWifi && !connectivityBluetooth) {
+            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + MAX_WAIT);
+        }
     }
     WriteSramProgAW9120(loopStartPC);
 
