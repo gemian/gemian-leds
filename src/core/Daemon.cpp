@@ -104,6 +104,15 @@ std::vector<HandlerRegistration> Daemon::register_event_handlers() {
                                     lightState->handleTorch(on);
                                 });
                     }));
+    registrations.push_back(
+            leds->registerLEDsCallHandler(
+                    [this](bool earpiece, bool leftUp)
+                    {
+                        enqueue_action(
+                                [this, earpiece, leftUp] {
+                                    lightState->handleCall(earpiece, leftUp);
+                                });
+                    }));
     return  registrations;
 }
 

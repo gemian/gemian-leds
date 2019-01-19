@@ -46,6 +46,9 @@ struct LEDsDBusClient : DBusClient {
         invoke_with_reply<DBusAsyncReplyVoid>(GEMINI_LEDS_DESTINATION, "SetTorch", g_variant_new("(bu)", on, duration));
     }
 
+    void emitSetCall(bool earpiece, bool leftUp) {
+        invoke_with_reply<DBusAsyncReplyVoid>(GEMINI_LEDS_DESTINATION, "SetCall", g_variant_new("(bb)", earpiece, leftUp));
+    }
 };
 
 std::chrono::seconds const default_timeout{3};
@@ -72,10 +75,17 @@ struct MockHandler {
         torchOn = on;
     }
 
+    void call(bool earpiece, bool leftUp) {
+        callsEarpiece = earpiece;
+        callsLeftUp = leftUp;
+    }
+
     std::vector<BlockAnimStep> steps;
     bool caps;
     bool push;
     bool torchOn;
+    bool callsEarpiece;
+    bool callsLeftUp;
 };
 
 struct ALEDs : TestBase {
@@ -104,6 +114,11 @@ struct ALEDs : TestBase {
                 leds.registerLEDsTorchHandler(
                         [this](bool on) {
                             mockHandler.torch(on);
+                        }));
+        registrations.push_back(
+                leds.registerLEDsCallHandler(
+                        [this](bool earpiece, bool leftUp) {
+                            mockHandler.call(earpiece, leftUp);
                         }));
         leds.start_processing();
     }
@@ -288,11 +303,11 @@ TEST_CASE("torch on") {
 
     WaitCondition request_processed;
 
-    aLEDs.client.emitSetTorch(true, 300);
+    aLEDs.client.emitSetTorch(true, 3*1000);
 
     request_processed.wait_for(default_timeout);
     REQUIRE(aLEDs.mockHandler.torchOn);
-    REQUIRE(aLEDs.fake_log.contains_line({"LEDs: torch 1(300)"}));
+    REQUIRE(aLEDs.fake_log.contains_line({"LEDs: torch 1(3000)"}));
 }
 
 TEST_CASE("torch off") {
@@ -306,4 +321,19 @@ TEST_CASE("torch off") {
     request_processed.wait_for(default_timeout);
     REQUIRE(!aLEDs.mockHandler.torchOn);
     REQUIRE(aLEDs.fake_log.contains_line({"LEDs: torch 0(0)"}));
+}
+
+TEST_CASE("calls earpiece on leftup") {
+    ALEDs aLEDs;
+    aLEDs.mockHandler.callsEarpiece = false;
+    aLEDs.mockHandler.callsLeftUp = false;
+
+    WaitCondition request_processed;
+
+    aLEDs.client.emitSetCall(true, true);
+
+    request_processed.wait_for(default_timeout);
+    REQUIRE(aLEDs.mockHandler.callsEarpiece);
+    REQUIRE(aLEDs.mockHandler.callsLeftUp);
+    REQUIRE(aLEDs.fake_log.contains_line({"LEDs: call 1 1"}));
 }

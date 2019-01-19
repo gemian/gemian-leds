@@ -34,6 +34,10 @@ char const *const leds_service_introspection = R"(
             <arg type="b" name="on" direction='in'></arg>
             <arg type="u" name="duration" direction='in'></arg>
         </method>
+        <method name='SetCall'>
+            <arg type="b" name="earpiece" direction='in'></arg>
+            <arg type="b" name="leftUp" direction='in'></arg>
+        </method>
     </interface>
 </node>)";
 
@@ -116,6 +120,14 @@ HandlerRegistration LEDs::registerLEDsTorchHandler(LEDsTorchHandler const &handl
             [this] { this->ledsTorchHandler = null_arg1_handler; }};
 }
 
+HandlerRegistration LEDs::registerLEDsCallHandler(LEDsCallHandler const &handler) {
+
+    return EventLoopHandlerRegistration{
+            dbus_event_loop,
+            [this, &handler] { this->ledsCallHandler = handler; },
+            [this] { this->ledsCallHandler = null_arg2_handler; }};
+}
+
 void LEDs::dbus_method_call(
         GDBusConnection * /*connection*/,
         gchar const *sender_cstr,
@@ -166,6 +178,12 @@ void LEDs::dbus_method_call(
         }
 
         log->log(log_tag, "torch %d(%d)", on, duration);
+        g_dbus_method_invocation_return_value(invocation, nullptr);
+    } else if (method_name == "SetCall") {
+        gboolean earpiece{FALSE},leftUp{FALSE};
+        g_variant_get(parameters, "(bb)", &earpiece, &leftUp);
+        ledsCallHandler(static_cast<bool>(earpiece),static_cast<bool>(leftUp));
+        log->log(log_tag, "call %d %d", earpiece, leftUp);
         g_dbus_method_invocation_return_value(invocation, nullptr);
     } else {
         log->log(log_tag, "dbus_unknown_method(%s,%s)", sender.c_str(), method_name.c_str());

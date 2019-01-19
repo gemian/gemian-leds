@@ -55,6 +55,8 @@ public:
 
     void handleTorch(bool on);
 
+    void handleCall(bool earpiece, bool leftUp);
+
     void Update();
 
     bool capsLock = false;
@@ -62,11 +64,17 @@ public:
     bool connectivityWifi = false;
     bool connectivityBluetooth = false;
     bool connectivityCellular = false;
+    bool callEarpiece = false;
+    bool callLeftUp = false;
     std::vector<BlockAnimStep> steps;
     std::shared_ptr<Log> const log;
 
 private:
     void WriteAW9120(unsigned int addr, unsigned int reg_data);
+
+    void WriteClassLEDGreen(bool on);
+
+    void WriteClassLEDRed(bool on);
 
     void DisableAW9120();
 
