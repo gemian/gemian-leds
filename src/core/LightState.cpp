@@ -209,6 +209,8 @@ void LightState::Update() {
             WriteClassLEDGreen(false);
         }
     } else {
+        WriteClassLEDRed(false);
+        WriteClassLEDGreen(false);
         if (connectivityCellular) {
             WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
         }
