@@ -20,6 +20,7 @@ using LEDsClearBlockHandler = std::function<void()>;
 using LEDsPushBlockHandler = std::function<void()>;
 using LEDsBlockHandler = std::function<void(int, BlockColour, BlockStepType, unsigned int)>;
 using LEDsTorchHandler = std::function<void(bool)>;
+using LEDsCallHandler = std::function<void(bool,bool)>;
 
 class LEDs {
 public:
@@ -38,6 +39,8 @@ public:
     HandlerRegistration registerLEDsBlockHandler(LEDsBlockHandler const &handler);
 
     HandlerRegistration registerLEDsTorchHandler(LEDsTorchHandler const &handler);
+
+    HandlerRegistration registerLEDsCallHandler(LEDsCallHandler const &handler);
 
 protected:
     LEDs() = default;
@@ -66,6 +69,7 @@ private:
     LEDsPushBlockHandler ledsPushBlockHandler;
     LEDsBlockHandler ledsBlockHandler;
     LEDsTorchHandler ledsTorchHandler;
+    LEDsCallHandler ledsCallHandler;
 
     bool verifyLed(guint led) const;
 

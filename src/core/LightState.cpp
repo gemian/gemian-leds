@@ -72,6 +72,12 @@ void LightState::handleTorch(bool on) {
     Update();
 }
 
+void LightState::handleCall(bool earpiece, bool leftUp) {
+    callEarpiece = earpiece;
+    callLeftUp = leftUp;
+    Update();
+}
+
 #define GCR   0x01
 #define LER1  0x50
 #define LER2  0x51
@@ -111,6 +117,22 @@ void LightState::WriteAW9120(unsigned int addr, unsigned int reg_data) {
     aw9120_reg.open("/proc/aw9120_reg");
     aw9120_reg << "0x" << std::hex << addr << " 0x" << std::hex << reg_data << std::endl;
     aw9120_reg.close();
+}
+
+void LightState::WriteClassLEDGreen(bool on) {
+    std::ofstream led_green;
+
+    led_green.open("/sys/class/leds/green/brightness");
+    led_green << on << std::endl;
+    led_green.close();
+}
+
+void LightState::WriteClassLEDRed(bool on) {
+    std::ofstream led_red;
+
+    led_red.open("/sys/class/leds/red/brightness");
+    led_red << on << std::endl;
+    led_red.close();
 }
 
 void LightState::DisableAW9120() {
@@ -174,17 +196,31 @@ void LightState::Update() {
     WriteSramProgAW9120(SET_STEP_TMRI + CH_ALL_LEDS + SET_STEP_PRE_05MS + 0x3); //step 2ms
     WriteSramProgAW9120(SETPWMI + CH_ALL_LEDS + 0x00); //all off
 
-    if (connectivityCellular) {
-        WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
-    }
-    if (connectivityWifi) {
-        WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
-    }
-    if (connectivityBluetooth) {
-        if (connectivityWifi) {
-            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xc0);
+    if (callEarpiece) {
+        if (callLeftUp) {
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
+            WriteClassLEDRed(false);
+            WriteClassLEDGreen(true);
         } else {
-            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
+            WriteClassLEDRed(true);
+            WriteClassLEDGreen(false);
+        }
+    } else {
+        if (connectivityCellular) {
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
+        }
+        if (connectivityWifi) {
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
+        }
+        if (connectivityBluetooth) {
+            if (connectivityWifi) {
+                WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xc0);
+            } else {
+                WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
+            }
         }
     }
     if (capsLock) {
@@ -219,26 +255,30 @@ void LightState::Update() {
         }
     }
     if (!delaySet) {
-        WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
-        WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
-        WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
-        if (connectivityCellular) {
-            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
-            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
-            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
-        }
-        if (connectivityWifi) {
-            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
-            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
-            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
-        }
-        if (connectivityBluetooth) {
-            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
-            WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
-            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
-        }
-        if (!connectivityCellular && !connectivityWifi && !connectivityBluetooth) {
+        if (callEarpiece) {
             WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + MAX_WAIT);
+        } else {
+            WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
+            WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
+            WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
+            if (connectivityCellular) {
+                WriteSramProgAW9120(SETPWMI + CH_6_RED + 0xa0);
+                WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+                WriteSramProgAW9120(SETPWMI + CH_6_RED + 0x00);
+            }
+            if (connectivityWifi) {
+                WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x50);
+                WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+                WriteSramProgAW9120(SETPWMI + CH_6_GREEN + 0x00);
+            }
+            if (connectivityBluetooth) {
+                WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0xff);
+                WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + 0x80);
+                WriteSramProgAW9120(SETPWMI + CH_6_BLUE + 0x00);
+            }
+            if (!connectivityCellular && !connectivityWifi && !connectivityBluetooth) {
+                WriteSramProgAW9120(WAITI + WAIT_PRE_16MS + MAX_WAIT);
+            }
         }
     }
     WriteSramProgAW9120(loopStartPC);
